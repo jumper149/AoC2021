@@ -57,13 +57,25 @@ namespace Input
          Right (result, rest) => do
            --printLn rest
            pure result
-  input = ?input_rhs
 
 countIncrements : Ord a => List1 a -> Nat
 countIncrements (x ::: []) = 0
 countIncrements (x ::: (y :: ys)) = if x < y
                                        then S $ countIncrements $ y ::: ys
                                        else countIncrements $ y ::: ys
+
+record List3 a where
+  constructor MkList3
+  x0, x1, x2 : a
+  xs : List a
+
+fromList : List a -> Maybe (List3 a)
+fromList (x0::x1::x2::xs) = Just $ MkList3 x0 x1 x2 xs
+fromList _ = Nothing
+
+groupMeasurements : List3 Nat -> List1 Nat
+groupMeasurements (MkList3 x0 x1 x2 []) = (x0 + x1 + x2) ::: []
+groupMeasurements (MkList3 x0 x1 x2 (x :: xs)) = (x0 + x1 + x2) `cons` groupMeasurements (MkList3 x1 x2 x xs)
 
 main : IO ()
 main = do
@@ -72,5 +84,11 @@ main = do
 
   -- part 1
   printLn $ countIncrements input
+
+  -- part 2
+  let groupedMeasurements = case Main.fromList $ toList input of
+                                 Nothing => ?inputTooShort
+                                 Just xs => groupMeasurements xs
+  printLn $ countIncrements groupedMeasurements
 
   pure ()
