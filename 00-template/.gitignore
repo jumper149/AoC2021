@@ -1,2 +1,2 @@
-build
-Main.idr~
+build/
+src/*.idr~
