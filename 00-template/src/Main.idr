@@ -6,7 +6,7 @@ import Generics.Derive
 
 -- Input.
 InputType : Type
---InputType = ?inputType_rhs
+InputType = Void
 
 -- Lexer.
 data Token = MkTokenNewline
@@ -32,15 +32,13 @@ part1 input = ?part1_rhs
 part2 : InputType -> IO ()
 part2 input = ?part2_rhs
 
--- Main.
-solution : AoCSolution Token InputType
-solution = MkAoCSolution
-  { inputFilePath = "./input"
-  , tokenizer = tokenizer
-  , grammar = grammar
-  , part1 = part1
-  , part2 = part2
-  }
-
 main : IO ()
 main = solveAoC solution
+  where solution : AoCSolution Token InputType
+        solution = MkAoCSolution
+          { inputFilePath = "./input"
+          , tokenizer = tokenizer
+          , grammar = grammar
+          , part1 = part1
+          , part2 = part2
+          }
