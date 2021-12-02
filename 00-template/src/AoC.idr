@@ -1,10 +1,15 @@
 module AoC
 
+import Generics.Derive
 import System.File.ReadWrite
 import public Text.Lexer
 import public Text.Lexer.Tokenizer
 import public Text.Parser
 import public Text.Parser.Core
+
+%language ElabReflection
+
+%runElab (derive "ParsingError" [ Meta, Show ])
 
 public export
 record AoCSolution tokenType inputType where
@@ -16,7 +21,7 @@ record AoCSolution tokenType inputType where
   part2 : inputType -> IO ()
 
 export
-solveAoC : AoCSolution tokenType inputType -> IO ()
+solveAoC : Show tokenType => Show inputType => AoCSolution tokenType inputType -> IO ()
 solveAoC solution = do
 
   -- Read file.
@@ -37,12 +42,15 @@ solveAoC solution = do
   -- Parse input.
   input <- case parse solution.grammar tokens of
                 Left err => do
-                  --printLn err
+                  printLn err
                   ?handleParseError
                 Right (result, rest) => do
-                  --printLn rest
+                  printLn rest
                   pure result
 
+  putStrLn "=========="
+  putStrLn "Input:"
+  print input
   putStrLn "=========="
   putStrLn "Part 1:"
   solution.part1 input

@@ -1,6 +1,8 @@
 module Main
 
 import AoC
+import Generics.Derive
+%language ElabReflection
 
 -- Input.
 InputType : Type
@@ -8,6 +10,7 @@ InputType : Type
 
 -- Lexer.
 data Token = MkTokenNewline
+%runElab (derive "Token" [ Eq, Generic, Meta, Ord, Show ])
 tokenizer : Tokenizer Token
 tokenizer = match newline (const MkTokenNewline)
         <|> ?tokenize
