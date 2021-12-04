@@ -9,7 +9,10 @@ import public Text.Parser.Core
 
 %language ElabReflection
 
-%runElab (derive "ParsingError" [ Meta, Show ])
+-- %runElab (derive "ParsingError" [ Meta, Show ])
+private
+showParsingError : Show a => ParsingError a -> String
+showParsingError (Error msg bnds) = "ParsingError: " ++ msg ++ " | Bounds: " ++ show bnds
 
 public export
 record AoCSolution tokenType inputType where
@@ -29,6 +32,7 @@ solveAoC solution = do
   inputString <- case readResult of
               Left err => do
                 printLn err
+                pure ()
                 ?handleFileError
               Right x => pure x
 
@@ -37,12 +41,14 @@ solveAoC solution = do
                  (x, (EndInput, _)) => pure x
                  (_, stopReason) => do
                    printLn stopReason
+                   pure ()
                    ?handleLexError
 
   -- Parse input.
   input <- case parse solution.grammar tokens of
                 Left err => do
-                  printLn err
+                  printLn $ showParsingError <$> err
+                  pure ()
                   ?handleParseError
                 Right (result, rest) => do
                   printLn rest

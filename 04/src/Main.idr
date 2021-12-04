@@ -67,6 +67,7 @@ grammarBoard = do
   y3 <- grammarRow <* grammarNewline
   y4 <- grammarRow <* grammarNewline
   y5 <- grammarRow
+  grammarNewline
   pure [y1,y2,y3,y4,y5]
 grammarNumbers : Grammar () Token True (List1 Number)
 grammarNumbers = someTill grammarNewline $ grammarNumber <* optional grammarComma
@@ -75,7 +76,6 @@ grammarBoards = someTill eof grammarBoard
 grammar : Grammar () Token True InputType
 grammar = do
   ns <- grammarNumbers
-  grammarNewline
   bs <- grammarBoards
   pure (ns,bs)
 
@@ -88,7 +88,9 @@ part2 : InputType -> IO ()
 part2 input = ?part2_rhs
 
 main : IO ()
-main = solveAoC solution
+main = do
+  solveAoC solution
+  pure ()
   where solution : AoCSolution Token InputType
         solution = MkAoCSolution
           { inputFilePath = "./input"
