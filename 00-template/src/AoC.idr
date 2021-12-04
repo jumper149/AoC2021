@@ -26,40 +26,39 @@ solveAoC solution = do
 
   -- Read file.
   readResult <- readFile solution.inputFilePath
-  inputString <- case readResult of
-              Left err => do
-                printLn err
-                ?handleFileError
-              Right x => pure x
+  case readResult of
+       Left err => do
+         putStrLn "Error reading file."
+         printLn err
+       Right inputString => do
 
-  -- Lex input.
-  tokens <- case lex solution.tokenizer inputString of
-                 (x, (EndInput, _)) => pure x
-                 (_, stopReason) => do
-                   printLn stopReason
-                   ?handleLexError
+         -- Lex input.
+         case lex solution.tokenizer inputString of
+              (tokens, (EndInput, _)) => do
 
-  -- Parse input.
-  input <- case parse solution.grammar tokens of
-                Left err => do
-                  printLn err
-                  ?handleParseError
-                Right (result, rest) => do
-                  printLn rest
-                  pure result
+                -- Parse input.
+                case parse solution.grammar tokens of
+                     Left err => do
+                       printLn err
+                     Right (result, rest) => do
+                       putStrLn "=========="
+                       putStrLn "Remaining tokens:"
+                       printLn rest
+                       putStrLn "=========="
+                       putStrLn "Input:"
+                       printLn result
+                       putStrLn "=========="
+                       putStrLn "Part 1:"
+                       solution.part1 result
+                       putStrLn "=========="
+                       putStrLn "Part 2:"
+                       solution.part2 result
+                       putStrLn "=========="
+                       pure ()
 
-  putStrLn "=========="
-  putStrLn "Input:"
-  print input
-  putStrLn ""
-  putStrLn "=========="
-  putStrLn "Part 1:"
-  solution.part1 input
-  putStrLn "=========="
-  putStrLn "Part 2:"
-  solution.part2 input
-  putStrLn "=========="
-  pure ()
+              (_, stopReason) => do
+                putStrLn "Error lexing input."
+                printLn stopReason
 
 private
 countLength' : List a -> (n ** Vect n a)
