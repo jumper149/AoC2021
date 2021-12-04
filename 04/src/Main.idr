@@ -80,8 +80,46 @@ grammar = do
   pure (ns,bs)
 
 -- Part 1.
+PlayingBoard : Type
+PlayingBoard = Vect 5 $ Vect 5 $ Maybe Number
+toPlayingBoard : Board -> PlayingBoard
+toPlayingBoard = map (map Just)
+bingoStep : Number -> PlayingBoard -> PlayingBoard
+bingoStep n = map (map updateNumber)
+  where
+    updateNumber : Maybe Number -> Maybe Number
+    updateNumber Nothing = Nothing
+    updateNumber (Just m) = if m == n
+                               then Nothing
+                               else Just m
+checkBingo : PlayingBoard -> Bool
+checkBingo xss = let bss = map (map numberToBool) xss
+                  in check bss || check (transpose bss)
+  where
+    numberToBool : Maybe Number -> Bool
+    numberToBool Nothing = True
+    numberToBool (Just n) = False
+    check : Vect 5 (Vect 5 Bool) -> Bool
+    check = any id . map (all id)
+sumBoard : PlayingBoard -> Number
+sumBoard = sum . map sum . map (map ignoreNothing)
+  where
+    ignoreNothing : Maybe Number -> Number
+    ignoreNothing Nothing = 0
+    ignoreNothing (Just x) = x
+bingoPlay : (last : Number) -> List Number -> List PlayingBoard -> Number
+bingoPlay last ns boards =
+  case reverse $ sort $ map sumBoard $ filter checkBingo boards of
+       [] => case ns of
+                  [] => ?nooneWins
+                  (x :: xs) => bingoPlay x xs $ bingoStep x <$> boards
+       x::xs => last * x
 part1 : InputType -> IO ()
-part1 input = ?part1_rhs
+part1 (numbers, boards) = do
+  let playingBoards = toPlayingBoard <$> boards
+  let x = bingoPlay 0 (forget numbers) (forget playingBoards)
+  printLn x
+  pure ()
 
 -- Part 2.
 part2 : InputType -> IO ()
