@@ -79,8 +79,48 @@ part1 (n ** vects) = do
   pure ()
 
 -- Part 2.
+mostCommonFirstBit : List (Vect (S n) Bool) -> Bool
+mostCommonFirstBit vects = if (count >= 0)
+                              then True
+                              else False
+  where
+    count : Integer
+    count = foldr (\ x => countBit (Data.Vect.head x)) 0 vects
+step1 : {n : Nat} -> List (Vect n Bool) -> List (Vect n Bool)
+step1 xs with (n)
+  _ | Z = xs
+  _ | (S k) = (y ::) <$> step1 ys
+    where
+      y : Bool
+      y = mostCommonFirstBit xs
+      ys : List (Vect k Bool)
+      ys = tail <$> filter ((== y) . head) xs
+leastCommonFirstBit : List (Vect (S n) Bool) -> Bool
+leastCommonFirstBit vects = if (count >= 0)
+                               then False
+                               else True
+  where
+    count : Integer
+    count = foldr (\ x => countBit (Data.Vect.head x)) 0 vects
+step2 : {n : Nat} -> List (Vect n Bool) -> List (Vect n Bool)
+step2 xs with (n)
+  _ | Z = xs
+  _ | (S k) = case ys of
+                   [] => xs
+                   (z::zs) => (y ::) <$> step2 ys
+    where
+      y : Bool
+      y = leastCommonFirstBit xs
+      ys : List (Vect k Bool)
+      ys = tail <$> filter ((== y) . head) xs
 part2 : InputType -> IO ()
-part2 input = ?part2_rhs
+part2 (n ** vects) = do
+  let x = bitsToNat . reverse <$> (step1 $ forget vects)
+  let y = bitsToNat . reverse <$> (step2 $ forget vects)
+  printLn $ x
+  printLn $ y
+  printLn $ (*) <$> x <*> y
+  pure ()
 
 main : IO ()
 main = solveAoC solution
