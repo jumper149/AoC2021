@@ -122,8 +122,19 @@ part1 (numbers, boards) = do
   pure ()
 
 -- Part 2.
+lastWinner : (last : Number) -> List Number -> List PlayingBoard -> (Number,List PlayingBoard)
+lastWinner last numbers boards =
+  case filter (not . checkBingo) boards of
+       [] => (last,boards)
+       ys => case numbers of
+                  [] => (last,boards)
+                  (x :: xs) => lastWinner x xs $ bingoStep x <$> ys
 part2 : InputType -> IO ()
-part2 input = ?part2_rhs
+part2 (numbers, boards) = do
+  let playingBoards = toPlayingBoard <$> boards
+  let (n,bs) = lastWinner 0 (forget numbers) (forget playingBoards)
+  printLn $ (n *) <$> (sumBoard <$> bs)
+  pure ()
 
 main : IO ()
 main = do
