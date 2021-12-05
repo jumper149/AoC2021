@@ -60,25 +60,23 @@ solveAoC solution = do
                 putStrLn "Error lexing input."
                 printLn stopReason
 
-private
-countLength' : List a -> (n ** Vect n a)
-countLength' [] = (0 ** [])
-countLength' (x :: xs) with (countLength' xs)
-  _ | (n ** ys) = (S n ** x :: ys)
+export
+withLength : Foldable f => f a -> (n ** Vect n a)
+withLength = fromList . toList
+where
+  fromList : List a -> (n ** Vect n a)
+  fromList [] = (0 ** [])
+  fromList (x :: xs) with (fromList xs)
+    _ | (n ** ys) = (S n ** x :: ys)
 
-public export
-countLength : Foldable f => f a -> (n ** Vect n a)
-countLength = countLength' . toList
-
-public export
-exactLengths : (len : Nat) -> Traversable t => t (n ** Vect n a) -> Maybe (t (Vect len a))
-exactLengths len xs = traverse (\ x => exactLength len x.snd) xs
-
-public export
+export
 equalLengths : List1 (n ** Vect n a) -> Maybe (m ** (List1 (Vect m a)))
 equalLengths ((len ** xs) ::: ys) = do
   list <- exactLengths len ys
   pure (len ** xs ::: list)
+where
+  exactLengths : (len : Nat) -> Traversable t => t (n ** Vect n a) -> Maybe (t (Vect len a))
+  exactLengths len xs = traverse (\ x => exactLength len x.snd) xs
 
 export
 grammarEmbedMaybe : String -> Maybe a -> Grammar state tok False a
