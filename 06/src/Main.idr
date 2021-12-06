@@ -68,7 +68,12 @@ part1 input = do
 
 -- Part 2.
 part2 : InputType -> IO ()
-part2 input = ?part2_rhs
+part2 input = do
+  let initial = initFishes $ forget $ weakenN 3 <$> input
+  let final = times 256 stepFishes initial
+  printLn initial
+  printLn final
+  printLn $ sum final
 
 main : IO ()
 main = solveAoC solution
