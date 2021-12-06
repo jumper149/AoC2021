@@ -40,17 +40,10 @@ grammar = do
   grammarEmbedMaybe "Finite numbers." ys
 
 -- Part 1.
---stepFish : Nat -> List1 Nat
---stepFish Z = 6 ::: [8]
---stepFish (S k) = k ::: []
---stepFishes : List Nat -> List Nat
---stepFishes = foldr (++) [] . map (forget . stepFish)
 times : Nat -> (a -> a) -> a -> a
 times Z f x = x
 times (S k) f x = times k f $ f x
-Fishes : Type
-Fishes = Vect 9 Nat
-initFishes : List (Fin 9) -> Fishes
+initFishes : List (Fin 9) -> Vect 9 Nat
 initFishes = foldr insert (replicate 9 0)
 where
   insert : Fin 9 -> Vect 9 Nat -> Vect 9 Nat
