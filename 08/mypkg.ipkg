@@ -1,0 +1,13 @@
+package mypkg
+
+modules = Main
+        , AoC
+main = Main
+
+depends = contrib
+        , elab-util
+        , sop
+
+executable = mypkg
+
+sourcedir = "src"
