@@ -77,8 +77,29 @@ part1 (n ** (m ** grid)) = do
   pure ()
 
 -- Part 2.
+basin : {n : Nat} -> {m : Nat} -> Vect m (Vect n (Fin 10)) -> List (Fin n, Fin m) -> List (Fin n, Fin m)
+basin grid xs = if xs == zs
+                   then xs
+                   else basin grid zs
+where
+  ys : List (Fin n, Fin m)
+  ys = sort $ nub $ foldr (++) xs $ adjacent <$> xs
+  f : (Fin n, Fin m) -> ((Fin n, Fin m), Fin 10)
+  f xy = (xy, height xy grid)
+  zs : List (Fin n, Fin m)
+  zs = sort $ map fst $ filter (\ (_, h) => h < last) $ f <$> ys
 part2 : InputType -> IO ()
-part2 input = ?part2_rhs
+part2 (n ** (m ** grid)) = do
+  let coords = do
+    x <- toList $ fins n
+    y <- toList $ fins m
+    pure (x, y)
+  let f = \ x => (isLowest grid x, x)
+  let lowPoints = map snd $ filter fst $ f <$> coords
+  let basins = basin grid . pure <$> lowPoints
+  let largestBasinSizes = take 3 $ reverse $ sort $ length <$> basins
+  printLn $ product largestBasinSizes
+  pure ()
 
 main : IO ()
 main = solveAoC solution
