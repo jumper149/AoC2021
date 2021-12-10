@@ -3,6 +3,7 @@ module Main
 import AoC
 import Control.Monad.State
 import Data.Either
+import Data.List
 import Generics.Derive
 %language ElabReflection
 
@@ -140,8 +141,28 @@ part1 input = do
   pure ()
 
 -- Part 2.
+remaining : (List Chunk, Either ChunkizeError Chunks) -> Maybe (List Chunk)
+remaining (_ , Left _) = Nothing
+remaining (s , Right _) = Just s
+scoreRemaining : List Chunk -> Nat -> Nat
+scoreRemaining [] acc = acc
+scoreRemaining (x::xs) acc = case x of
+                                  MkChunkParens => scoreRemaining xs $ acc * 5 + 1
+                                  MkChunkBracket => scoreRemaining xs $ acc * 5 + 2
+                                  MkChunkCurly => scoreRemaining xs $ acc * 5 + 3
+                                  MkChunkOrd => scoreRemaining xs $ acc * 5 + 4
+getMiddle : List a -> Maybe a
+getMiddle [] = Nothing
+getMiddle [x] = Just x
+getMiddle xs = (tail' >=> init' >=> getMiddle) $ xs
 part2 : InputType -> IO ()
-part2 input = ?part2_rhs
+part2 input = do
+  let lines = forget <$> input
+  let chunkizeds = runState [] <$> (g1 <$> lines)
+  let ss = catMaybes $ remaining <$> forget chunkizeds
+  let scores = sort $ (\ x => scoreRemaining x 0) <$> ss
+  printLn $ getMiddle scores
+  pure ()
 
 main : IO ()
 main = solveAoC solution
