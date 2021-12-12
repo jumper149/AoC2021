@@ -112,8 +112,15 @@ part1 input = do
   printLn $ countFlashes input 100
 
 -- Part 2.
+zeroGrid : Vect 10 (Vect 10 (Fin 10))
+zeroGrid = replicate 10 (replicate 10 FZ)
+findSim : Vect 10 (Vect 10 (Fin 10)) -> Nat
+findSim grid = if grid == zeroGrid
+                  then Z
+                  else S $ findSim $ step grid
 part2 : InputType -> IO ()
-part2 input = ?part2_rhs
+part2 input = do
+  printLn $ findSim input
 
 main : IO ()
 main = solveAoC solution
