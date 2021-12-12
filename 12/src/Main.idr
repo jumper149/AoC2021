@@ -2,6 +2,8 @@ module Main
 
 import AoC
 import Generics.Derive
+import Data.SortedMap
+import Data.SortedSet
 %language ElabReflection
 
 -- Input.
@@ -66,6 +68,7 @@ grammar = do
 flipConnection : (connection : Connection) ->
                  Connection
 flipConnection (MkConnection from to) = MkConnection to from
+
 nextCaves : (connections : List Connection) ->
             (cave : Cave) ->
             List Cave
@@ -97,33 +100,75 @@ part1 input = do
   pure ()
 
 -- Part 2.
-waysToEnd2 : (connections : List Connection) ->
+connectionMap : List Connection -> SortedMap Cave (SortedSet Cave)
+connectionMap = foldr ins empty
+where
+  ins : Connection -> SortedMap Cave (SortedSet Cave) -> SortedMap Cave (SortedSet Cave)
+  ins c cm = insert c.to (c.from `insert` xTo) . insert c.from (c.to `insert` xFrom) $ cm
+  where
+    xFrom : SortedSet Cave
+    xFrom = case lookup c.from cm of
+                 Nothing => empty
+                 Just cs => cs
+    xTo : SortedSet Cave
+    xTo = case lookup c.to cm of
+               Nothing => empty
+               Just cs => cs
+
+lookupCaves : Cave -> SortedMap Cave (SortedSet Cave) -> SortedSet Cave
+lookupCaves c cm = case lookup c cm of
+                        Nothing => empty
+                        Just cs => cs
+
+deleteCave : Cave -> SortedMap Cave (SortedSet Cave) -> SortedMap Cave (SortedSet Cave)
+deleteCave c = delete c . map (delete c)
+
+waysToEnd3 : (connections : SortedMap Cave (SortedSet Cave)) ->
              (cave : Cave) ->
              (twice : Bool) ->
-             List (List Cave)
-waysToEnd2 _ MkCaveEnd _ = pure [ MkCaveEnd ]
-waysToEnd2 connections cave@(MkCaveUpper name) twice = do
-  next <- nextCaves connections cave
-  way <- waysToEnd2 connections next twice
-  pure $ cave :: way
-waysToEnd2 connections cave@MkCaveStart twice = do
-  next <- nextCaves connections cave
-  way <- waysToEnd2 (removeCave connections cave) next twice
-  pure $ cave :: way
-waysToEnd2 connections cave twice@True = do
-  next <- nextCaves connections cave
-  way <- waysToEnd2 (removeCave connections cave) next twice
-  pure $ cave :: way
-waysToEnd2 connections cave False = do
-  next <- nextCaves connections cave
-  way <- nub $ waysToEnd2 (removeCave connections cave) next False ++ waysToEnd2 connections next True
-  pure $ cave :: way
+             SortedSet (List Cave)
+waysToEnd3 _ MkCaveEnd _ = singleton [ MkCaveEnd ]
+waysToEnd3 connections cave@(MkCaveUpper name) twice = fromList . map (cave ::) . Data.SortedSet.toList $ ways
+where
+  nexts : SortedSet Cave
+  nexts = lookupCaves cave connections
+  ways : SortedSet (List Cave)
+  ways = foldr (\ x, y => waysToEnd3 connections x twice `union` y) empty nexts
+waysToEnd3 connections cave@MkCaveStart twice = fromList . map (cave ::) . Data.SortedSet.toList $ ways
+where
+  nexts : SortedSet Cave
+  nexts = lookupCaves cave connections
+  nexts' : List (Cave, SortedMap Cave (SortedSet Cave))
+  nexts' = (\ x => (x, deleteCave cave connections)) <$> Data.SortedSet.toList nexts
+  ways : SortedSet (List Cave)
+  ways = foldr (\ (x, conns), y => waysToEnd3 conns x twice `union` y) empty nexts'
+waysToEnd3 connections cave twice@True = fromList . map (cave ::) . Data.SortedSet.toList $ ways
+where
+  nexts : SortedSet Cave
+  nexts = lookupCaves cave connections
+  nexts' : List (Cave, SortedMap Cave (SortedSet Cave))
+  nexts' = (\ x => (x, deleteCave cave connections)) <$> Data.SortedSet.toList nexts
+  ways : SortedSet (List Cave)
+  ways = foldr (\ (x, conns), y => waysToEnd3 conns x twice `union` y) empty nexts'
+waysToEnd3 connections cave twice@False = fromList . map (cave ::) . Data.SortedSet.toList $ ways
+where
+  nexts : SortedSet Cave
+  nexts = lookupCaves cave connections
+  nexts' : List (Cave, SortedMap Cave (SortedSet Cave))
+  nexts' = (\ x => (x, deleteCave cave connections)) <$> Data.SortedSet.toList nexts
+  ways1 : SortedSet (List Cave)
+  ways1 = foldr (\ (x, conns), y => waysToEnd3 conns x twice `union` y) empty nexts'
+  ways2 : SortedSet (List Cave)
+  ways2 = foldr (\ x, y => waysToEnd3 connections x True `union` y) empty nexts
+  ways : SortedSet (List Cave)
+  ways = ways1 `union` ways2
 
 part2 : InputType -> IO ()
 part2 input = do
   let directedConnections = sort $ nub $ forget input
-  let connections = nub $ sort $ directedConnections ++ (flipConnection <$> directedConnections)
-  printLn $ length $ nub $ waysToEnd2 connections MkCaveStart False
+  let connections = connectionMap directedConnections
+  let ways = waysToEnd3 connections MkCaveStart False
+  printLn $ length $ Data.SortedSet.toList ways
   pure ()
 
 main : IO ()
