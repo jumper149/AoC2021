@@ -82,9 +82,60 @@ part1 input = do
   printLn $ xg - xl
   pure ()
 
+
 -- Part 2.
+pairs : List1 Char -> SortedMap (Char, Char) Nat
+pairs (x ::: []) = empty
+pairs (x ::: (y :: ys)) = insert key val rec
+where
+  rec : SortedMap (Char, Char) Nat
+  rec = pairs $ y ::: ys
+  key : (Char, Char)
+  key = (x, y)
+  val : Nat
+  val = S $ case lookup key rec of
+                 Nothing => Z
+                 Just x => x
+
+useRule : (rules : SortedMap (Char, Char) Char) ->
+          (charPair : ((Char, Char), Nat)) ->
+          SortedMap (Char, Char) Nat
+useRule rules (lr@(l, r), n) = case lookup lr rules of
+                                    Nothing => insert lr n $ empty
+                                    Just c => insert (l, c) n $ insert (c, r) n $ empty
+
+step : (rules : SortedMap (Char, Char) Char) ->
+       (chars : SortedMap (Char, Char) Nat) ->
+       SortedMap (Char, Char) Nat
+step rules chars = foldr (mergeWith (+)) empty $ useRule rules <$> Data.SortedMap.toList chars
+
+fromPairs : SortedMap (Char, Char) Nat -> SortedMap Char Nat
+fromPairs xs = foldr (mergeWith (+)) empty $ map (uncurry singleton) $ singles $ Data.SortedMap.toList xs
+where
+  singles : List ((Char, Char), Nat) -> List (Char, Nat)
+  singles [] = []
+  singles (((x, y), n)::xs) = (x, n) :: (y, n) :: singles xs
+
+prepNumber : (firstChar : Char) -> (lastChar : Char) -> (Char, Nat) -> Integer
+prepNumber firstChar lastChar (c, n) = if c == firstChar || c == lastChar
+                                          then (natToInteger n + 1) `div` 2
+                                          else natToInteger n `div` 2
+
 part2 : InputType -> IO ()
-part2 input = ?part2_rhs
+part2 input = do
+  let chars = fst input
+  let firstChar = head chars
+  let lastChar = last chars
+  let charPairs = pairs chars
+  let instructions = forget $ snd input
+  let rules = foldr (\ x => insert (x.left, x.right) x.new) empty instructions
+  let x0 = times 40 (step rules) charPairs
+  let xFinal = Data.List1.fromList $ sortBy (\ x, y => compare (snd x) (snd y)) $ Data.SortedMap.toList $ fromPairs x0
+  case xFinal of
+       Nothing => ?emptyOut
+       Just xs => do
+         printLn $ (prepNumber firstChar lastChar $ last xs) - (prepNumber firstChar lastChar $ head xs)
+  pure ()
 
 main : IO ()
 main = solveAoC solution
